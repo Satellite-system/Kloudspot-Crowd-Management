@@ -34,8 +34,12 @@ export const DataCacheProvider = ({ children }) => {
 
   const getCache = (key) => state.cache[key];
 
+   const clearCache = () => {
+    dispatch({ type: "CLEAR_CACHE" });
+  };
+
   return (
-    <DataCacheContext.Provider value={{ getCache, setCache }}>
+    <DataCacheContext.Provider value={{ getCache, setCache, clearCache }}>
       {children}
     </DataCacheContext.Provider>
   );
