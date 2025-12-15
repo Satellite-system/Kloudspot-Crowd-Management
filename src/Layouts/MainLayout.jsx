@@ -63,7 +63,7 @@ function MainLayout() {
     <div className="w-screen h-screen flex flex-row">
       {/* Left Side Navigation */}
       <div
-        className="w-[17%] h-screen bg-cover p-4 overflow-y-hidden flex flex-col justify-between"
+        className="w-[18%] h-screen bg-cover p-4 overflow-y-hidden flex flex-col justify-between"
         style={{ backgroundImage: "url('/sideBarBg.png')" }}
       >
         <div>
