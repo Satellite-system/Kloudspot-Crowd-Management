@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     // setUser(null);
     localStorage.clear();
-    console.log("Logout Called");
+    // console.log("Logout Called");
   };
 
   return (

@@ -15,7 +15,7 @@ export const useApi = () => {
         data,
         ...config,
       });
-      console.log("UseApi: ", response.data);
+      // console.log("UseApi: ", response.data);
       return response.data;
     } catch (err) {
       setError(err.response?.data || err.message);

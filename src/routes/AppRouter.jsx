@@ -6,7 +6,7 @@ import MainLayout from "../Layouts/MainLayout";
 import OverviewPage from "../pages/OverviewPage";
 
 export default function AppRouter() {
-  console.log("Inside AppRouter.jsx");
+  // console.log("Inside AppRouter.jsx");
   return (
     <BrowserRouter>
       <Routes>
