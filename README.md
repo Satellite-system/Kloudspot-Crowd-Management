@@ -220,12 +220,15 @@ clearCache();
 ```
 src/
  ├── api/
+ ├── assets/
+ ├── components/
  ├── context/
  ├── hooks/
- ├── layouts/
+ ├── Layouts/
  ├── pages/
+ ├── routes/
  ├── utils/
- └── AppRouter.jsx
+ └── App.jsx
 ```
 
 ---
