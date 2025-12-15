@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import logo from "./../assets/icons/logo.png";
 import { FiHome } from "react-icons/fi";
 import cowdIcon from "./../assets/icons/crowdEntries.png";
@@ -13,6 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import { useDataCache } from "../context/DataCacheContext";
 import { useApi } from "../hooks/useApi";
 import { useGlobal } from "../context/GlobalContext";
+import AlertsPanel from "../components/AlertsPanel";
 
 function MainLayout() {
   // console.log("Inside MainLayout");
@@ -24,6 +25,8 @@ function MainLayout() {
   const { stateVal, setSelectedSite, clearAll } = useGlobal();
   const { getApi } = useApi();
   const [site, setSite] = useState([]);
+  const [show, setShow] = useState(false);
+  const notificationRef = useRef(null);
 
   // alert(JSON.stringify(location.pathname));
   const isActive = () => location.pathname === "/";
@@ -35,7 +38,17 @@ function MainLayout() {
     navigate("/login", { replace: true });
   };
 
-  useEffect(() => {
+  
+    useEffect(() => {
+      // --- Click Outside Logic using useEffect --- 
+      const handleClickOutside = (event) => {
+        if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+          setShow(false);
+        }
+      };
+  
+      document.addEventListener("mousedown", handleClickOutside);
+      
     const CACHE_KEY = "SITES";
 
     const cachedData = getCache(CACHE_KEY);
@@ -46,7 +59,6 @@ function MainLayout() {
       setSite(cachedData.data);
       console.log("Selected Cache:: ", cachedData.data);
       setSelectedSite(cachedData.data[0]);
-      return;
     } else {
       getApi("/sites").then((res) => {
         setSite(res);
@@ -57,7 +69,14 @@ function MainLayout() {
         setSelectedSite(res[0]);
       });
     }
+
+    return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+
   }, []);
+
+
 
   return (
     <div className="w-screen h-screen flex flex-row">
@@ -156,9 +175,13 @@ function MainLayout() {
             </div>
 
             {/* Notification */}
-            <div className="relative">
+            <div className="relative inline-block" ref={notificationRef}>
+            <div className="relative cursor-pointer" onClick={()=> setShow(true)} >
               <FiBell className="w-7 h-7 text-black" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
+            </div>
+
+            {show && <AlertsPanel setShow={setShow} />}
             </div>
 
             {/* Profile Image */}
@@ -174,6 +197,7 @@ function MainLayout() {
 
         {/* 4. The Content passed from the Router */}
         <Outlet />
+
       </div>
     </div>
   );
