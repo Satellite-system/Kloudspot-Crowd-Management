@@ -89,7 +89,7 @@ function MainLayout() {
                 <div className="bg-white h-12 w-2 rounded-3xl"></div>
               )}
               <FiHome color="white" size={30} />
-              <span className="text-[#FFFFFF] font-ibm font-normal text-[20px] leading-[14.63px] tracking-[-0.27px] align-middle capitalize">
+              <span className="text-[#FFFFFF] font-ibm font-normal text-[18px] leading-[14.63px] tracking-[-0.27px] align-middle capitalize">
                 Overview
               </span>
             </div>
@@ -106,7 +106,7 @@ function MainLayout() {
                 <div className="bg-white h-12 w-2 rounded-3xl"></div>
               )}
               <img src={cowdIcon} alt="nav2" className="w-7" />
-              <span className="text-[#FFFFFF] font-ibm font-normal text-[20px] leading-[14.63px] tracking-[-0.27px] align-middle capitalize">
+              <span className="text-[#FFFFFF] font-ibm font-normal text-[18px] leading-[14.63px] tracking-[-0.27px] align-middle capitalize">
                 Crowd Entries
               </span>
             </div>
