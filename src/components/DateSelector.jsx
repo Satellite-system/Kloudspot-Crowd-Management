@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { Calendar } from "lucide-react";
 import DatePicker from "react-datepicker"; // Third-party library for the calendar UI
+import { useGlobal } from "../context/GlobalContext";
 
 const DateSelector = ({ selectedDate, setSelectedDate }) => {
-  // State to manage the date currently selected in the calendar
-  // const [selectedDate, setSelectedDate] = useState(new Date());
-
   // State to manage the visibility of the calendar dropdown/modal
   const [isOpen, setIsOpen] = useState(false);
+  const { setDate } = useGlobal();
 
   // Function to format the display text of the button
   const getDisplayText = () => {
@@ -29,19 +28,13 @@ const DateSelector = ({ selectedDate, setSelectedDate }) => {
   // Function to handle the date selection change
   const handleChange = (date) => {
     setSelectedDate(date);
+    setDate(date);
     setIsOpen(false); // Close the calendar after selection
   };
 
   // Function to handle the button click (toggles visibility)
   const toggleCalendar = () => {
     setIsOpen(!isOpen);
-  };
-
-  // Function for the "Today" button behavior (sets date to today)
-  const handleTodayClick = (e) => {
-    e.stopPropagation(); // Prevents the main toggle from firing twice
-    setSelectedDate(new Date());
-    setIsOpen(false);
   };
 
   return (

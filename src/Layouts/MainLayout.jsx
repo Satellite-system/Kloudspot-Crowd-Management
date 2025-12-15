@@ -15,13 +15,13 @@ import { useApi } from "../hooks/useApi";
 import { useGlobal } from "../context/GlobalContext";
 
 function MainLayout() {
-  console.log("Inside MainLayout");
+  // console.log("Inside MainLayout");
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
 
-  const { getCache, setCache } = useDataCache();
-  const { stateVal } = useGlobal();
+  const { getCache, setCache, clearCache } = useDataCache();
+  const { stateVal, setSelectedSite, clearAll } = useGlobal();
   const { getApi } = useApi();
   const [site, setSite] = useState([]);
 
@@ -30,6 +30,8 @@ function MainLayout() {
 
   const logoutHandler = () => {
     logout();
+    clearAll();
+    clearCache();
     navigate("/login", { replace: true });
   };
 
@@ -40,16 +42,19 @@ function MainLayout() {
 
     // Cache valid for 5 minutes
     if (cachedData && Date.now() - cachedData.timestamp < 5 * 60 * 1000) {
-      console.log("Using cached data");
-      setSite(cachedData);
+      console.log("Using cached SITES: ", cachedData);
+      setSite(cachedData.data);
+      console.log("Selected Cache:: ", cachedData.data);
+      setSelectedSite(cachedData.data[0]);
       return;
     } else {
       getApi("/sites").then((res) => {
         setSite(res);
-        setCache(res, {
-          data: res.data,
+        setCache(CACHE_KEY, {
+          data: res,
           timestamp: Date.now(),
         });
+        setSelectedSite(res[0]);
       });
     }
   }, []);
@@ -135,7 +140,7 @@ function MainLayout() {
             {site && site.length > 0 && (
               <CustomDropdownComponent
                 locations={site}
-                currLocation={stateVal || site[0]}
+                currLocation={stateVal.selectedSite || site[0]}
               />
             )}
           </div>

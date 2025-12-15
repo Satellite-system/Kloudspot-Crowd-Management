@@ -1,50 +1,81 @@
-import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import { useApi } from "../hooks/useApi";
 import PaginationComponent from "../components/PaginationComponent";
+import { useGlobal } from "../context/GlobalContext";
+import DateSelector from "../components/DateSelector";
+import { getUtcDayRange } from "../utils/helperFunctions";
+import { useDataCache } from "../context/DataCacheContext";
 
 export default function OverviewPage() {
-  const [page, setPage] = useState(1);
+  const { stateVal } = useGlobal();
+  const { getCache, setCache } = useDataCache();
+
   const [data, setData] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [currPage, setcurrPage] = useState(1);
+  const [selectedDate, setSelectedDate] = useState(stateVal.date || new Date());
+
   const ITEMS_PER_PAGE = 10;
   const { postApi, loading, error } = useApi();
-  // const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
 
-  useEffect(() => {
+  const getoverviewData = (page) => {
+    const utcInterval = getUtcDayRange(selectedDate);
+
     const body = {
-      siteId: "8bd0d580-fdac-44a4-a6e4-367253099c4e",
-      fromUtc: "1765656000000",
-      toUtc: "1765742399999",
-      pageNumber: currPage,
+      siteId: stateVal.selectedSite.siteId,
+      fromUtc: utcInterval.fromUtc,
+      toUtc: utcInterval.toUtc,
+      pageNumber: page,
       pageSize: ITEMS_PER_PAGE,
     };
-    postApi("/analytics/entry-exit", body).then((res) => {
-      setData(res.records);
-      setTotalPages(res.totalPages);
-    });
-  }, [currPage]);
+
+    const dateKey = new Date(selectedDate).toISOString().split("T")[0];
+
+    const CACHE_KEY = `OVERVIEW_${body.siteId}_${dateKey}_PAGE_${currPage}`;
+    const CACHE_TTL = 15 * 60 * 1000;
+
+    const cached = getCache(CACHE_KEY);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log("Getting from cache", CACHE_KEY);
+      setData(cached.data.records);
+      setTotalPages(cached.data.totalPages);
+    } else {
+      postApi("/analytics/entry-exit", body).then((res) => {
+        setData(res.records);
+        setTotalPages(res.totalPages);
+
+        setCache(CACHE_KEY, { data: res, timestamp: Date.now() });
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    if (!stateVal?.selectedSite?.siteId) return;
+
+    getoverviewData(currPage);
+  }, [currPage, selectedDate]);
+
+  useEffect(() => {
+    setcurrPage(1);
+  }, [stateVal?.selectedSite?.siteId]);
 
   const pageChangeHandler = (page) => {
     if (currPage === page) return;
     setcurrPage(page);
   };
 
-  const paginatedData = data.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
-
   return (
     <div className="p-6 bg-[#F8F9FB] min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-lg font-semibold">Overview</h1>
-        <button className="flex items-center gap-2 border px-4 py-2 rounded-lg bg-white text-sm">
-          <FiCalendar />
-          Today
-        </button>
+
+        <DateSelector
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+        />
       </div>
 
       {/* Table */}
@@ -61,7 +92,7 @@ export default function OverviewPage() {
           </thead>
 
           <tbody>
-            {paginatedData.map((row, idx) => (
+            {data.map((row, idx) => (
               <tr key={row.personId} className="border-t">
                 <td className="p-4 flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-gray-300" />

@@ -21,17 +21,20 @@ import DateSelector from "../components/DateSelector";
 import { useApi } from "../hooks/useApi";
 import { useDataCache } from "../context/DataCacheContext";
 import { utcToLocalTime } from "../utils/utcMillHelper";
-import { calculateGenderPercentage } from "../utils/helperFunctions";
+import {
+  calculateGenderPercentage,
+  getUtcDayRange,
+} from "../utils/helperFunctions";
+import { useGlobal } from "../context/GlobalContext";
 
 function DashboardPage() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const { stateVal } = useGlobal();
+  const [selectedDate, setSelectedDate] = useState(stateVal.date || new Date());
   const { getCache, setCache } = useDataCache();
   const { postApi } = useApi();
-  const [site, setSite] = useState([]);
   const [demographic, setDemographic] = useState(null);
   const [occupancy, setOccupancy] = useState(null);
-
-  const stats = [
+  const [stats, setStats] = useState([
     {
       title: "Live Occupancy",
       value: "734",
@@ -53,43 +56,30 @@ function DashboardPage() {
       positive: true,
       subtitle: "More than yesterday",
     },
-  ];
-
-  const chartData = [
-    { time: "8:00", count: 150 },
-    { time: "9:00", count: 155 },
-    { time: "10:00", count: 160 },
-    { time: "11:00", count: 168 },
-    { time: "12:00", count: 172 },
-    { time: "13:00", count: 165 },
-    { time: "14:00", count: 178 },
-    { time: "15:00", count: 175 },
-    { time: "16:00", count: 185 },
-  ];
-
-  const genderData = [
-    { name: "Male", value: 55 },
-    { name: "Female", value: 45 },
-  ];
+  ]);
 
   const COLORS = ["#7FB3B0", "#BFE6E3"];
 
   useEffect(() => {
-    const CACHE_KEY_DEMO = "DEMOGRAPHICS";
-    const CACHE_KEY_OCC = "OCCUPANCY";
-    const CACHE_TTL = 15 * 60 * 1000;
+    if (!selectedDate) return;
+    if (!stateVal?.selectedSite?.siteId) return;
+
+    const utcInterval = getUtcDayRange(selectedDate);
 
     const body = {
-      siteId: "8bd0d580-fdac-44a4-a6e4-367253099c4e",
-      fromUtc: "1765656000000",
-      toUtc: "1765742399999",
+      siteId: stateVal.selectedSite.siteId,
+      fromUtc: utcInterval.fromUtc,
+      toUtc: utcInterval.toUtc,
     };
+    const dateKey = new Date(selectedDate).toISOString().split("T")[0];
+    const DEMO_KEY = `DEMOGRAPHICS_${body.siteId}_${dateKey}`;
+    const OCC_KEY = `OCCUPANCY_${body.siteId}_${dateKey}`;
+    const CACHE_TTL = 15 * 60 * 1000;
 
-    /* ---------------- DEMOGRAPHICS ---------------- */
-    const cachedDemo = getCache(CACHE_KEY_DEMO);
+    /* ---------- DEMOGRAPHICS ---------- */
+    const cachedDemo = getCache(DEMO_KEY);
 
     if (cachedDemo && Date.now() - cachedDemo.timestamp < CACHE_TTL) {
-      console.log("Using cached demographics");
       setDemographic(cachedDemo.data);
     } else {
       postApi("/analytics/demographics", body).then((res) => {
@@ -102,35 +92,33 @@ function DashboardPage() {
         }
 
         setDemographic(res);
-
-        setCache(CACHE_KEY_DEMO, {
-          data: res,
-          timestamp: Date.now(),
-        });
+        setCache(DEMO_KEY, { data: res, timestamp: Date.now() });
       });
     }
 
-    /* ---------------- OCCUPANCY ---------------- */
-    const cachedOcc = getCache(CACHE_KEY_OCC);
+    /* ---------- OCCUPANCY ---------- */
+    const cachedOcc = getCache(OCC_KEY);
 
     if (cachedOcc && Date.now() - cachedOcc.timestamp < CACHE_TTL) {
-      console.log("Using cached occupancy: ", cachedOcc.data);
       setOccupancy(cachedOcc.data);
     } else {
       postApi("/analytics/occupancy", body).then((res) => {
         setOccupancy(res);
-
-        setCache(CACHE_KEY_OCC, {
-          data: res,
-          timestamp: Date.now(),
-        });
+        setCache(OCC_KEY, { data: res, timestamp: Date.now() });
       });
     }
-  }, []);
 
-  const handleDateSelect = () => {
-    alert("Today's date button was clicked!");
-  };
+    /* ---------- FOOTFALL ---------- */
+    postApi("/analytics/footfall", body).then((res) => {
+      setStats((prev) =>
+        prev.map((item) =>
+          item.title === "Today’s Footfall"
+            ? { ...item, value: res.footfall }
+            : item
+        )
+      );
+    });
+  }, [selectedDate, stateVal?.selectedSite?.siteId]);
 
   return (
     <div className="bg-[#F7F8FA] w-full p-6 min-h-screen">
@@ -249,7 +237,7 @@ function DashboardPage() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {genderData.map((_, index) => (
+                    {demographic.percentage.map((_, index) => (
                       <Cell key={index} fill={COLORS[index]} />
                     ))}
                   </Pie>
