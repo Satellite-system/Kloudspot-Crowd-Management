@@ -6,28 +6,20 @@ import MainLayout from "../Layouts/MainLayout";
 import OverviewPage from "../pages/OverviewPage";
 
 export default function AppRouter() {
+  console.log("Inside AppRouter.jsx");
   return (
     <BrowserRouter>
       <Routes>
-        {/* <Route path="/" element={<LoginPage />} /> */}
-        {/* <Route path="/" element={<MainLayout children={Dashboard} />} /> */}
+        {/* Public */}
+        <Route path="/login" element={<LoginPage />} />
 
-
-        {/* Apply the Layout component to all routes that need the sidebar/header */}
-        <Route path="/" element={<MainLayout />}>
-          {/* These are the children passed to the Layout component */}
-          {/* <Route index element={<Dashboard />} /> Renders the Overview content */}
-          <Route index element={<OverviewPage />} /> {/* Renders the Overview content */}
-          {/* <Route path="crowd-entries" element={<OverviewPage />} /> */}
+        {/* Protected Layout */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="crowd-entries" element={<OverviewPage />} />
+          </Route>
         </Route>
-
-        {/* Protected Example */}
-        <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
       </Routes>
     </BrowserRouter>
   );
